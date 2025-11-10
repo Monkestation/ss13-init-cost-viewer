@@ -193,7 +193,10 @@ function renderTree(tree: Tree, container: HTMLElement, totalCost: number, sortB
       childContainer.id = myId;
       container.appendChild(childContainer);
       // by default children are visible; toggle handler
-      exp.addEventListener("click", () => {
+      item.style.cursor = "pointer";
+      item.addEventListener("click", (e) => {
+        if (e.target !== item && e.target !== nameSpan && e.target !== exp) return;
+
         if (childContainer.style.display === "none") {
           childContainer.style.display = "block";
           exp.textContent = "▼";
