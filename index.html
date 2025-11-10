@@ -6,65 +6,230 @@
     <title>SS13 Init Log Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
-  <body>
-    <style>
-      body {
-        font-family: monospace;
-        background: #1e1e1e;
-        color: #d4d4d4;
-        padding: 20px;
-      }
-      .tree-node {
-        margin-left: 20px;
-        margin-top: 5px;
-      }
-      .tree-item {
-        cursor: pointer;
-        padding: 3px 5px;
-        border-radius: 3px;
-      }
-      .tree-item:hover {
-        background: #2d2d30;
-      }
-      .cost-high {
-        color: #f48771;
-        font-weight: bold;
-      }
-      .cost-med {
-        color: #dcdcaa;
-      }
-      .cost-low {
-        color: #4ec9b0;
-      }
-      .expander {
-        display: inline-block;
-        width: 15px;
-      }
-      .percentage {
-        color: #858585;
-        font-size: 0.9em;
-      }
-      .count {
-        color: #9cdcfe;
-        font-size: 0.9em;
-      }
-      .avg {
-        color: #ce9178;
-        font-size: 0.9em;
-      }
-      .summary {
-        background: #252526;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-      }
-      .controls {
-        background: #252526;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 15px;
-      }
-      .controls button {
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #272727;
+      font-size: 12px;
+      color: #ffffff;
+      line-height: 170%;
+    }
+
+    hr {
+      background-color: #40628a;
+      height: 2px;
+      border: 0;
+    }
+
+    a,
+    button,
+    a:link,
+    a:visited,
+    a:active,
+    .linkOn,
+    .linkOff {
+      color: #ffffff;
+      text-decoration: none;
+      background: #40628a;
+      border: 1px solid #161616;
+      padding: 1px 4px 1px 4px;
+      margin: 0 2px 0 0;
+      cursor: default;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    a:hover {
+      color: #40628a;
+      background: #ffffff;
+    }
+
+    a.inlineblock {
+      display: inline-block;
+    }
+
+    a.white,
+    a.white:link,
+    a.white:visited,
+    a.white:active {
+      color: #40628a;
+      text-decoration: none;
+      background: #ffffff;
+      border: 1px solid #161616;
+      padding: 1px 4px 1px 4px;
+      margin: 0 2px 0 0;
+      cursor: default;
+    }
+
+    a.white:hover {
+      color: #ffffff;
+      background: #40628a;
+    }
+
+    .linkOn,
+    a.linkOn:link,
+    a.linkOn:visited,
+    a.linkOn:active,
+    a.linkOn:hover {
+      color: #ffffff;
+      background: #2f943c;
+      border-color: #24722e;
+    }
+
+    .linkOff,
+    a.linkOff:link,
+    a.linkOff:visited,
+    a.linkOff:active,
+    a.linkOff:hover {
+      color: #ffffff;
+      background: #999999;
+      border-color: #666666;
+    }
+
+    a.icon,
+    .linkOn.icon,
+    .linkOff.icon {
+      position: relative;
+      padding: 1px 4px 2px 20px;
+    }
+
+    a.icon img,
+    .linkOn.icon img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 18px;
+      height: 18px;
+    }
+
+    ul {
+      padding: 4px 0 0 10px;
+      margin: 0;
+      list-style-type: none;
+    }
+
+    li {
+      padding: 0 0 2px 0;
+    }
+
+    img,
+    a img {
+      border-style: none;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin: 0;
+      padding: 2px 0 4px 0;
+      color: #517087;
+    }
+
+    h1 {
+      font-size: 15px;
+    }
+
+    h2 {
+      font-size: 14px;
+    }
+
+    h3 {
+      font-size: 13px;
+    }
+
+    h4 {
+      font-size: 12px;
+    }
+
+    .uiWrapper {
+      width: 100%;
+      height: 100%;
+    }
+
+    .uiTitle {
+      clear: both;
+      padding: 6px 8px 6px 8px;
+      border-bottom: 2px solid #161616;
+      background: #383838;
+      color: #98b0c3;
+      font-size: 16px;
+    }
+
+    .uiTitle.icon {
+      padding: 6px 8px 6px 42px;
+      background-position: 2px 50%;
+      background-repeat: no-repeat;
+    }
+
+    .uiContent {
+      clear: both;
+      padding: 8px;
+      font-family: Verdana, Geneva, sans-serif;
+    }
+    .block {
+      padding: 8px;
+      margin: 10px 4px 4px 4px;
+      border: 1px solid #40628a;
+      background-color: #202020;
+    }
+
+    .tree-node {
+      margin-left: 20px;
+      /* margin-top: 5px; */
+    }
+    .tree-item {
+      cursor: pointer;
+      /* padding: 3px 5px; */
+      border-radius: 3px;
+    }
+    .tree-item:hover {
+      background: #2d2d30;
+    }
+    .cost-high {
+      color: #f48771;
+      font-weight: bold;
+    }
+    .cost-med {
+      color: #dcdcaa;
+    }
+    .cost-low {
+      color: #4ec9b0;
+    }
+    .expander {
+      display: inline-block;
+      width: 15px;
+    }
+    .percentage {
+      color: #858585;
+      font-size: 0.9em;
+    }
+    .count {
+      color: #9cdcfe;
+      font-size: 0.9em;
+    }
+    .avg {
+      color: #ce9178;
+      font-size: 0.9em;
+    }
+    .summary {
+      background: #252526;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .controls {
+      background: #252526;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    /* .controls button {
         background: #0e639c;
         color: white;
         border: none;
@@ -72,69 +237,201 @@
         border-radius: 3px;
         cursor: pointer;
         margin-right: 10px;
-      }
-      .controls button:hover {
+      } */
+    /* .controls button:hover {
         background: #1177bb;
       }
       .controls button.active {
         background: #1177bb;
-      }
-      .tab-group {
-        display: inline-block;
-        margin-right: 20px;
-      }
-    </style>
+      } */
+    .tab-group {
+      display: inline-block;
+      /* margin-right: 20px; */
+    }
+    a,
+    button,
+    a:link,
+    a:visited,
+    a:active,
+    .linkOn,
+    .linkOff {
+      color: #ffffff;
+      text-decoration: none;
+      background: #40628a;
+      border: 1px solid #161616;
+      padding: 1px 4px 1px 4px;
+      margin: 0 2px 0 0;
+      cursor: default;
+      font-family: monospace;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
 
-    <input type="file" id="fileInput" style="display: none" />
-    <button onclick='document.getElementById("fileInput").click();'>Load Init Log File</button>
-    <script>
-      document.getElementById("fileInput").addEventListener("change", function (event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const data = JSON.parse(e.target.result);
-            window.DATA = data;
-            renderAll();
-          } catch (err) {
-            alert("Error parsing JSON: " + err.message);
-          }
-        };
-        reader.readAsText(file);
-      });
-    </script>
-    <!-- <input type='button' value='Export JSON' onclick='exportJSON()' />
-<script>
-function exportJSON() {
-	const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.DATA));
-	const dlAnchorElem = document.createElement('a');
-	dlAnchorElem.setAttribute("href", dataStr);
-	dlAnchorElem.setAttribute("download", "init_costs_[MODE].json");
-	document.body.appendChild(dlAnchorElem);
-	dlAnchorElem.click();
-	dlAnchorElem.remove();
-}
-</script> -->
-    <!-- <a
-      onclick="window.location.href = 'byond:\/\/?action=openLink&link=' + encodeURIComponent('https:\/\/monkestation.github.io/ss13-init-cost-viewer/');"
-      href="#"
-      >Website version</a
-    >
-    <a href="https://monkestation.github.io/ss13-init-cost-viewer/" target="_blank"> (the link doesnt work)</a> -->
-    <div class="controls">
-      <div class="tab-group">
-        <button id="btn_init" class="active" onclick='setMode("init")'>Initialize()</button>
-        <button id="btn_late" onclick='setMode("late")'>LateInitialize()</button>
-      </div>
-      <div class="tab-group">
-        <button id="btn_total" class="active" onclick='setSort("total")'>Sort by Total Time</button>
-        <button id="btn_avg" onclick='setSort("avg")'>Sort by Average Time</button>
+    a:hover {
+      color: #40628a;
+      background: #ffffff;
+    }
+
+    a.white,
+    a.white:link,
+    a.white:visited,
+    a.white:active {
+      color: #40628a;
+      text-decoration: none;
+      background: #ffffff;
+      border: 1px solid #161616;
+      padding: 1px 4px 1px 4px;
+      margin: 0 2px 0 0;
+      cursor: default;
+    }
+
+    a.white:hover {
+      color: #ffffff;
+      background: #40628a;
+    }
+
+    .linkOn,
+    a.linkOn:link,
+    a.linkOn:visited,
+    a.linkOn:active,
+    a.linkOn:hover {
+      color: #ffffff;
+      background: #2f943c;
+      border-color: #24722e;
+    }
+
+    .linkOff,
+    a.linkOff:link,
+    a.linkOff:visited,
+    a.linkOff:active,
+    a.linkOff:hover {
+      color: #ffffff;
+      background: #999999;
+      border-color: #666666;
+    }
+
+    .statusDisplay {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #40628a;
+      padding: 4px;
+      margin: 3px 0;
+    }
+
+    .statusLabel,
+    .statusDisplay b {
+      width: 128px;
+      float: left;
+      overflow: hidden;
+      color: #98b0c3;
+    }
+
+    .statusValue {
+      float: left;
+    }
+
+    .runtime {
+      background-color: #171717;
+      border: solid 1px #202020;
+      font-family: "Courier New";
+      padding: 10px;
+      color: #cccccc;
+      display: grid;
+    }
+  </style>
+  <body>
+    <div class="uiTitleWrapper">
+      <div class="uiTitle">
+        <tt>SS13 JSON Log Viewer</tt> |
+        <span style="font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 12px">
+          <a href="https://github.com/Monkestation/Monkestation2.0/pull/9444" target="_blank" rel="noopener noreferrer"
+            >Game Code</a
+          >
+          |
+          <a href="https://github.com/monkestation/ss13-init-cost-viewer/" target="_blank" rel="noopener noreferrer"
+            >Repository</a
+          >
+          <!-- TODO: add modal code for a readme -->
+          <!-- |
+          <a href="#">?</a> -->
+        </span>
       </div>
     </div>
 
-    <div id="summary" class="summary"></div>
-    <div id="tree_root"></div>
+    <!-- <input type="button" value="Export JSON" onclick="exportJSON()" />
+    <script>
+      function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.DATA));
+        const dlAnchorElem = document.createElement("a");
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "init_costs_[MODE].json");
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        dlAnchorElem.remove();
+      }
+    </script>
+    <a
+      onclick="window.location.href = 'byond:\/\/?action=openLink&link=' + encodeURIComponent('https:\/\/monkestation.github.io/ss13-init-cost-viewer/');"
+      href="#"
+      >Website version</a
+    > -->
+    <div class="uiContent">
+      <input type="file" id="fileInput" style="display: none" accept="application/json" />
+      <a onclick='document.getElementById("fileInput").click();'>Load Init Log File</a>
+      <a onclick='loadExampleFile();' alt="Load example file" title="Load example file">(?)</a>
+
+      <script>
+        document.getElementById("fileInput").addEventListener("change", function (event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = JSON.parse(e.target.result);
+              if (!data.init || !data.late) {
+                alert("Invalid file format: missing 'init' or 'late' sections.");
+                return;
+              }
+              window.DATA = data;
+              renderAll();
+            } catch (err) {
+              alert("Error parsing JSON: " + err.message);
+            }
+          };
+          reader.readAsText(file);
+        });
+
+        function loadExampleFile() {
+          fetch("init_costs_example_1762772978248.json")
+            .then((response) => response.json())
+            .then((exampleData) => {
+              window.DATA = exampleData;
+              renderAll();
+            })
+            .catch((error) => {
+              alert("Error loading example file: " + error.message);
+            });
+        }
+      </script>
+      <div>
+        <div class="tab-group">
+          <a id="btn_init" onclick='setMode("init")'>Initialize()</a>
+          <a id="btn_late" onclick='setMode("late")'>LateInitialize()</a> |
+        </div>
+        <div class="tab-group">
+          <a id="btn_total" onclick='setSort("total")'>Sort by Total Time</a>
+          <a id="btn_avg" onclick='setSort("avg")'>Sort by Average Time</a>
+        </div>
+      </div>
+      <hr />
+
+      <div id="mainContent" style="display: none;">
+        <div id="summary" class="statusDisplay"></div>
+        <div id="tree_root" class="runtime"></div>
+      </div>
+    </div>
 
     <script>
       let MODE = "init"; // 'init' or 'late'
@@ -216,7 +513,7 @@ function exportJSON() {
           const exp = document.createElement("span");
           exp.className = "expander";
           exp.id = "exp_" + myId;
-          exp.textContent = hasChildren ? "▼" : "\\u00A0";
+          exp.textContent = hasChildren ? "▼" : "\u00A0";
           if (hasChildren) exp.style.cursor = "pointer";
           item.appendChild(exp);
 
@@ -295,7 +592,7 @@ function exportJSON() {
           types +
           "<br>" +
           "<b>Average Cost:</b> " +
-          formatNumber(totalCost / Math.max(totalCount, 1)) +
+          totalCost / Math.max(totalCount, 1) +
           " ds per instance<br>" +
           "<b>Sorting by:</b> " +
           (SORT === "avg" ? "Average time per instance" : "Total time");
@@ -309,6 +606,8 @@ function exportJSON() {
         document.getElementById("btn_late").className = MODE === "late" ? "active" : "";
         document.getElementById("btn_total").className = SORT === "total" ? "active" : "";
         document.getElementById("btn_avg").className = SORT === "avg" ? "active" : "";
+
+        document.getElementById("mainContent").style.display = "block";
       }
 
       function setMode(m) {
