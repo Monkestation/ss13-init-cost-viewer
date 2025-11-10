@@ -1,4 +1,3 @@
-
 export {};
 
 // Types
@@ -18,30 +17,37 @@ interface CostData {
 }
 
 interface TreeNode {
-    cost: number;
-    count: number;
-    direct_cost: number;
-    direct_count: number;
-    children: any;
-    path: string;
-    is_leaf: boolean;
-  }
+  cost: number;
+  count: number;
+  direct_cost: number;
+  direct_count: number;
+  children: any;
+  path: string;
+  is_leaf: boolean;
+}
 
 interface Tree {
   [x: string]: TreeNode;
 }
 
-declare global  {
+declare global {
   interface Window {
     DATA: CostData | null;
     iLoveNumbersIShouldMarryThem: boolean;
+    setMode: (m: "init" | "late") => void;
+    setSort: (s: "total" | "avg") => void;
+    renderAll: () => void;
   }
 }
+
 
 // Globals
 
 window.DATA = null as CostData | null; // to be filled by external script
 window.iLoveNumbersIShouldMarryThem = false;
+window.setMode = setMode;
+window.setSort = setSort;
+window.renderAll = renderAll;
 let MODE: "init" | "late" = "init"; // 'init' or 'late'
 let SORT: "total" | "avg" = "total"; // 'total' or 'avg'
 let TIME_UNIT = "ds"; // "ds" (default) or "ms"
@@ -58,7 +64,6 @@ function convertTime(ds: number) {
       return ds; // ds
   }
 }
-
 
 function buildTree(flat: CostChild): Tree {
   const root = {} as Tree;
@@ -258,11 +263,10 @@ function renderAll() {
   document.getElementById("mainContent")!.style.display = "block";
 }
 
-document.getElementById("timeUnitSelect")!.addEventListener("change", function () {
+(document.getElementById("timeUnitSelect") as HTMLInputElement).addEventListener("change", function () {
   TIME_UNIT = this.value;
   renderAll();
 });
-
 
 function setMode(m: typeof MODE) {
   if (MODE === m) return;
@@ -276,7 +280,3 @@ function setSort(s: typeof SORT) {
   renderAll();
 }
 
-// now we have to set all the functions that can be used externally, on the window.
-window.setMode = setMode;
-window.setSort = setSort;
-window.renderAll = renderAll;
