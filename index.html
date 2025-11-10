@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>SS13 Init Log Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: monospace;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+      }
+      .tree-node {
+        margin-left: 20px;
+        margin-top: 5px;
+      }
+      .tree-item {
+        cursor: pointer;
+        padding: 3px 5px;
+        border-radius: 3px;
+      }
+      .tree-item:hover {
+        background: #2d2d30;
+      }
+      .cost-high {
+        color: #f48771;
+        font-weight: bold;
+      }
+      .cost-med {
+        color: #dcdcaa;
+      }
+      .cost-low {
+        color: #4ec9b0;
+      }
+      .expander {
+        display: inline-block;
+        width: 15px;
+      }
+      .percentage {
+        color: #858585;
+        font-size: 0.9em;
+      }
+      .count {
+        color: #9cdcfe;
+        font-size: 0.9em;
+      }
+      .avg {
+        color: #ce9178;
+        font-size: 0.9em;
+      }
+      .summary {
+        background: #252526;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .controls {
+        background: #252526;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+      }
+      .controls button {
+        background: #0e639c;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      .controls button:hover {
+        background: #1177bb;
+      }
+      .controls button.active {
+        background: #1177bb;
+      }
+      .tab-group {
+        display: inline-block;
+        margin-right: 20px;
+      }
+    </style>
+
+    <input type="file" id="fileInput" style="display: none" />
+    <button onclick='document.getElementById("fileInput").click();'>Load Init Log File</button>
+    <script>
+      document.getElementById("fileInput").addEventListener("change", function (event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            window.DATA = data;
+            renderAll();
+          } catch (err) {
+            alert("Error parsing JSON: " + err.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+    </script>
+    <!-- <input type='button' value='Export JSON' onclick='exportJSON()' />
+<script>
+function exportJSON() {
+	const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.DATA));
+	const dlAnchorElem = document.createElement('a');
+	dlAnchorElem.setAttribute("href", dataStr);
+	dlAnchorElem.setAttribute("download", "init_costs_[MODE].json");
+	document.body.appendChild(dlAnchorElem);
+	dlAnchorElem.click();
+	dlAnchorElem.remove();
+}
+</script> -->
+    <a
+      onclick="window.location.href = 'byond:\/\/?action=openLink&link=' + encodeURIComponent('https:\/\/monkestation.github.io/ss13-init-cost-viewer/');"
+      href="#"
+      >Website version</a
+    >
+    <a href="https://monkestation.github.io/ss13-init-cost-viewer/" target="_blank"> (the link doesnt work)</a>
+    <div class="controls">
+      <div class="tab-group">
+        <button id="btn_init" class="active" onclick='setMode("init")'>Initialize()</button>
+        <button id="btn_late" onclick='setMode("late")'>LateInitialize()</button>
+      </div>
+      <div class="tab-group">
+        <button id="btn_total" class="active" onclick='setSort("total")'>Sort by Total Time</button>
+        <button id="btn_avg" onclick='setSort("avg")'>Sort by Average Time</button>
+      </div>
+    </div>
+
+    <div id="summary" class="summary"></div>
+    <div id="tree_root"></div>
+
+    <script>
+      let MODE = "init"; // 'init' or 'late'
+      let SORT = "total"; // 'total' or 'avg'
+
+      function buildTree(flat) {
+        const root = {};
+        for (const path in flat) {
+          const entry = flat[path];
+          const parts = path.split("/").filter(Boolean);
+          let node = root;
+          let built = "";
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            built += (built ? "/" : "") + part;
+            if (!node[part]) {
+              node[part] = {
+                cost: 0,
+                count: 0,
+                direct_cost: 0,
+                direct_count: 0,
+                children: {},
+                path: built,
+                is_leaf: i === parts.length - 1,
+              };
+            }
+            if (i === parts.length - 1) {
+              node[part].direct_cost = entry.cost || 0;
+              node[part].direct_count = entry.count || 0;
+            }
+            node[part].cost += entry.cost || 0;
+            node[part].count += entry.count || 0;
+            node = node[part].children;
+          }
+        }
+        return root;
+      }
+
+      function formatNumber(n) {
+        return Math.round(n * 1000) / 1000;
+      }
+      function clearChildren(el) {
+        while (el.firstChild) el.removeChild(el.firstChild);
+      }
+
+      function sortedKeys(tree, sortByAvg, totalCost) {
+        const keys = Object.keys(tree);
+        keys.sort((a, b) => {
+          const n1 = tree[a],
+            n2 = tree[b];
+          const v1 = sortByAvg ? n1.cost / Math.max(n1.count, 1) : n1.cost;
+          const v2 = sortByAvg ? n2.cost / Math.max(n2.count, 1) : n2.cost;
+          return v2 - v1; // descending
+        });
+        return keys;
+      }
+
+      let idCounter = 0;
+      function renderTree(tree, container, totalCost, sortByAvg) {
+        const keys = sortedKeys(tree, sortByAvg, totalCost);
+        for (const key of keys) {
+          const node = tree[key];
+          const cost = node.cost;
+          const count = node.count;
+          const direct_cost = node.direct_cost;
+          const direct_count = node.direct_count;
+          const avg_cost = formatNumber(cost / Math.max(count, 1));
+          const percentage = totalCost > 0 ? formatNumber((cost / totalCost) * 100) : 0;
+          idCounter++;
+          const myId = "node" + idCounter;
+          const hasChildren = Object.keys(node.children).length > 0;
+          let costClass = "cost-low";
+          if (percentage >= 10) costClass = "cost-high";
+          else if (percentage >= 1) costClass = "cost-med";
+
+          const item = document.createElement("div");
+          item.className = "tree-item";
+
+          const exp = document.createElement("span");
+          exp.className = "expander";
+          exp.id = "exp_" + myId;
+          exp.textContent = hasChildren ? "▼" : "\\u00A0";
+          if (hasChildren) exp.style.cursor = "pointer";
+          item.appendChild(exp);
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = costClass;
+          nameSpan.textContent = key;
+          item.appendChild(nameSpan);
+
+          const info = document.createElement("span");
+          info.innerHTML =
+            " - <b>" +
+            cost +
+            'ds</b> <span class="count">(' +
+            count +
+            'x)</span> <span class="avg">' +
+            avg_cost +
+            "ds avg</span>";
+          if (direct_cost > 0 && hasChildren) {
+            const directAvg = formatNumber(direct_cost / Math.max(direct_count, 1));
+            info.innerHTML += " (direct: " + direct_cost + "ds, " + direct_count + "x, " + directAvg + "ds avg) ";
+          }
+          info.innerHTML += ' <span class="percentage">(' + percentage + "%)</span>";
+          item.appendChild(info);
+
+          container.appendChild(item);
+
+          if (hasChildren) {
+            const childContainer = document.createElement("div");
+            childContainer.className = "tree-node";
+            childContainer.id = myId;
+            container.appendChild(childContainer);
+            // by default children are visible; toggle handler
+            exp.addEventListener("click", () => {
+              if (childContainer.style.display === "none") {
+                childContainer.style.display = "block";
+                exp.textContent = "▼";
+              } else {
+                childContainer.style.display = "none";
+                exp.textContent = "▶";
+              }
+            });
+            renderTree(node.children, childContainer, totalCost, sortByAvg);
+          }
+        }
+      }
+
+      function renderAll() {
+        const flat = MODE === "init" ? window.DATA.init : window.DATA.late;
+        const tree = buildTree(flat);
+        // compute totals
+        let totalCost = 0,
+          totalCount = 0,
+          types = 0;
+        for (const k in flat) {
+          totalCost += flat[k].cost || 0;
+          totalCount += flat[k].count || 0;
+          types++;
+        }
+
+        const summary = document.getElementById("summary");
+        summary.innerHTML =
+          "<h2>" +
+          (MODE === "late" ? "Late " : "") +
+          "Initialization Cost Analysis</h2>" +
+          "<b>Total " +
+          (MODE === "late" ? "Late " : "") +
+          "Init Time:</b> " +
+          totalCost +
+          " ds (" +
+          formatNumber(totalCost / 10) +
+          "s)<br>" +
+          "<b>Total Instances:</b> " +
+          totalCount +
+          "<br>" +
+          "<b>Total Types:</b> " +
+          types +
+          "<br>" +
+          "<b>Average Cost:</b> " +
+          formatNumber(totalCost / Math.max(totalCount, 1)) +
+          " ds per instance<br>" +
+          "<b>Sorting by:</b> " +
+          (SORT === "avg" ? "Average time per instance" : "Total time");
+
+        const root = document.getElementById("tree_root");
+        clearChildren(root);
+        idCounter = 0;
+        renderTree(tree, root, totalCost, SORT === "avg");
+        // update buttons classes
+        document.getElementById("btn_init").className = MODE === "init" ? "active" : "";
+        document.getElementById("btn_late").className = MODE === "late" ? "active" : "";
+        document.getElementById("btn_total").className = SORT === "total" ? "active" : "";
+        document.getElementById("btn_avg").className = SORT === "avg" ? "active" : "";
+      }
+
+      function setMode(m) {
+        if (MODE === m) return;
+        MODE = m;
+        renderAll();
+      }
+      function setSort(s) {
+        if (SORT === s) return;
+        SORT = s;
+        renderAll();
+      }
+    </script>
+  </body>
+</html>
